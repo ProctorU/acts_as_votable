@@ -2,6 +2,8 @@ require 'acts_as_votable/helpers/words'
 
 module ActsAsVotable
   class Vote < ::ActiveRecord::Base
+    include PublicActivity::Model
+    tracked
 
     include Helpers::Words
 
@@ -22,6 +24,16 @@ module ActsAsVotable
 
     validates_presence_of :votable_id
     validates_presence_of :voter_id
+    
+    before_destroy :find_and_destroy_activity
+    
+    private
+      def find_and_destroy_activity
+        activity = PublicActivity::Activity.find_by_trackable_id(self.id)
+        if activity.present?
+          activity.destroy
+        end
+      end
 
   end
 
